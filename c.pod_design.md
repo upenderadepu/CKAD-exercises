@@ -13,6 +13,8 @@ kubernetes.io > Documentation > Concepts > Overview > [Labels and Selectors](htt
 kubectl run nginx1 --image=nginx --restart=Never --labels=app=v1
 kubectl run nginx2 --image=nginx --restart=Never --labels=app=v1
 kubectl run nginx3 --image=nginx --restart=Never --labels=app=v1
+# or
+for i in `seq 1 3`; do k run nginx$i --image=nginx -l app=v1 ; done
 ```
 
 </p>
@@ -173,7 +175,7 @@ kubectl describe po nginx1 | grep -i 'annotations'
 
 # or
 
-kubectl get pods -o custom-columns=Name:metadata.name,ANNOTATIONS:metadata.annotations.description
+kubectl get po nginx1 -o custom-columns=Name:metadata.name,ANNOTATIONS:metadata.annotations.description
 ```
 
 As an alternative to using `| grep` you can use jsonPath like `kubectl get po nginx1 -o jsonpath='{.metadata.annotations}{"\n"}'`
@@ -209,13 +211,13 @@ kubectl delete po nginx{1..3}
 
 kubernetes.io > Documentation > Concepts > Workloads > Controllers > [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment)
 
-### Create a deployment with image nginx:1.7.8, called nginx, having 2 replicas, defining port 80 as the port that this container exposes (don't create a service for this deployment)
+### Create a deployment with image nginx:1.18.0, called nginx, having 2 replicas, defining port 80 as the port that this container exposes (don't create a service for this deployment)
 
 <details><summary>show</summary>
 <p>
 
 ```bash
-kubectl create deployment nginx  --image=nginx:1.7.8  --dry-run=client -o yaml > deploy.yaml
+kubectl create deployment nginx  --image=nginx:1.18.0  --dry-run=client -o yaml > deploy.yaml
 vi deploy.yaml
 # change the replicas field from 1 to 2
 # add this section to the container spec and save the deploy.yaml file
@@ -227,12 +229,12 @@ kubectl apply -f deploy.yaml
 or, do something like:
 
 ```bash
-kubectl create deployment nginx  --image=nginx:1.7.8  --dry-run=client -o yaml | sed 's/replicas: 1/replicas: 2/g'  | sed 's/image: nginx:1.7.8/image: nginx:1.7.8\n        ports:\n        - containerPort: 80/g' | kubectl apply -f -
+kubectl create deployment nginx  --image=nginx:1.18.0  --dry-run=client -o yaml | sed 's/replicas: 1/replicas: 2/g'  | sed 's/image: nginx:1.18.0/image: nginx:1.18.0\n        ports:\n        - containerPort: 80/g' | kubectl apply -f -
 ```
 
 or, 
 ```bash
-kubectl create deploy nginx --image=nginx:1.7.8 --replicas=2 --port=80
+kubectl create deploy nginx --image=nginx:1.18.0 --replicas=2 --port=80
 ```
 
 </p>
@@ -295,13 +297,13 @@ kubectl rollout status deploy nginx
 </p>
 </details>
 
-### Update the nginx image to nginx:1.7.9
+### Update the nginx image to nginx:1.19.8
 
 <details><summary>show</summary>
 <p>
 
 ```bash
-kubectl set image deploy nginx nginx=nginx:1.7.9
+kubectl set image deploy nginx nginx=nginx:1.19.8
 # alternatively...
 kubectl edit deploy nginx # change the .spec.template.spec.containers[0].image
 ```
@@ -326,7 +328,7 @@ kubectl get po
 </p>
 </details>
 
-### Undo the latest rollout and verify that new pods have the old image (nginx:1.7.8)
+### Undo the latest rollout and verify that new pods have the old image (nginx:1.18.0)
 
 <details><summary>show</summary>
 <p>
@@ -335,7 +337,7 @@ kubectl get po
 kubectl rollout undo deploy nginx
 # wait a bit
 kubectl get po # select one 'Running' Pod
-kubectl describe po nginx-5ff4457d65-nslcl | grep -i image # should be nginx:1.7.8
+kubectl describe po nginx-5ff4457d65-nslcl | grep -i image # should be nginx:1.18.0
 ```
 
 </p>
@@ -365,14 +367,14 @@ kubectl edit deploy nginx
 ```bash
 kubectl rollout status deploy nginx
 # or
-kubectl get po # you'll see 'ErrImagePull'
+kubectl get po # you'll see 'ErrImagePull' or 'ImagePullBackOff'
 ```
 
 </p>
 </details>
 
 
-### Return the deployment to the second revision (number 2) and verify the image is nginx:1.7.9
+### Return the deployment to the second revision (number 2) and verify the image is nginx:1.19.8
 
 <details><summary>show</summary>
 <p>
@@ -419,6 +421,8 @@ kubectl describe deploy nginx
 
 ```bash
 kubectl autoscale deploy nginx --min=5 --max=10 --cpu-percent=80
+# view the horizontalpodautoscalers.autoscaling for nginx
+kubectl get hpa nginx
 ```
 
 </p>
@@ -436,23 +440,23 @@ kubectl rollout pause deploy nginx
 </p>
 </details>
 
-### Update the image to nginx:1.9.1 and check that there's nothing going on, since we paused the rollout
+### Update the image to nginx:1.19.9 and check that there's nothing going on, since we paused the rollout
 
 <details><summary>show</summary>
 <p>
 
 ```bash
-kubectl set image deploy nginx nginx=nginx:1.9.1
+kubectl set image deploy nginx nginx=nginx:1.19.9
 # or
 kubectl edit deploy nginx
-# change the image to nginx:1.9.1
+# change the image to nginx:1.19.9
 kubectl rollout history deploy nginx # no new revision
 ```
 
 </p>
 </details>
 
-### Resume the rollout and check that the nginx:1.9.1 image has been applied
+### Resume the rollout and check that the nginx:1.19.9 image has been applied
 
 <details><summary>show</summary>
 <p>
@@ -511,6 +515,12 @@ OR
 ```bash
 kubectl get jobs -w # wait till 'SUCCESSFUL' is 1 (will take some time, perl image might be big)
 kubectl logs job/pi
+kubectl delete job pi
+```
+OR 
+
+```bash
+kubectl wait --for=condition=complete --timeout=300 job pi
 kubectl delete job pi
 ```
 
@@ -759,7 +769,7 @@ kubectl delete cj busybox
 kubectl create cronjob time-limited-job --image=busybox --restart=Never --dry-run=client --schedule="* * * * *" -o yaml -- /bin/sh -c 'date; echo Hello from the Kubernetes cluster' > time-limited-job.yaml
 vi time-limited-job.yaml
 ```
-Add cronjob.spec.startingDeadlineSeconds=17
+Add cronjob.spec.jobTemplate.spec.activeDeadlineSeconds=17
 
 ```bash
 apiVersion: batch/v1beta1
@@ -768,12 +778,12 @@ metadata:
   creationTimestamp: null
   name: time-limited-job
 spec:
-  startingDeadlineSeconds: 17 # add this line
   jobTemplate:
     metadata:
       creationTimestamp: null
       name: time-limited-job
     spec:
+      activeDeadlineSeconds: 17 # add this line
       template:
         metadata:
           creationTimestamp: null

@@ -86,6 +86,12 @@ status:
   loadBalancer: {}
 ```
 
+or
+
+```bash
+kubectl patch svc nginx -p '{"spec":{"type":"NodePort"}}' 
+```
+
 ```bash
 kubectl get svc
 ```
@@ -120,7 +126,7 @@ kubectl create deploy foo --image=dgkanatsios/simpleapp --port=8080 --replicas=3
 </p>
 </details>
 
-### Get the pod IPs. Create a temp busybox pod and trying hitting them on port 8080
+### Get the pod IPs. Create a temp busybox pod and try hitting them on port 8080
 
 <details><summary>show</summary>
 <p>
@@ -132,6 +138,8 @@ kubectl run busybox --image=busybox --restart=Never -it --rm -- sh
 wget -O- POD_IP:8080 # do not try with pod name, will not work
 # try hitting all IPs to confirm that hostname is different
 exit
+# or
+kubectl get po -o wide -l app=foo | awk '{print $6}' | grep -v IP | xargs -L1 -I '{}' kubectl run --rm -ti tmp --restart=Never --image=busybox -- wget -O- http://\{\}:8080
 ```
 
 </p>

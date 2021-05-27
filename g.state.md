@@ -118,7 +118,7 @@ kubectl get pv
 </p>
 </details>
 
-### Create a PersistentVolumeClaim for this storage class, called mypvc, a request of 4Gi and an accessMode of ReadWriteOnce, with the storageClassName of normal, and save it on pvc.yaml. Create it on the cluster. Show the PersistentVolumeClaims of the cluster. Show the PersistentVolumes of the cluster
+### Create a PersistentVolumeClaim for this storage class, called 'mypvc', a request of 4Gi and an accessMode of ReadWriteOnce, with the storageClassName of normal, and save it on pvc.yaml. Create it on the cluster. Show the PersistentVolumeClaims of the cluster. Show the PersistentVolumes of the cluster
 
 <details><summary>show</summary>
 <p>
@@ -244,7 +244,7 @@ kubectl get po busybox2 -o wide
 
 If they are on different nodes, you won't see the file, because we used the `hostPath` volume type.
 If you need to access the same files in a multi-node cluster, you need a volume type that is independent of a specific node.
-There are lots of different types per cloud provider (see here)[https://kubernetes.io/docs/concepts/storage/persistent-volumes/#types-of-persistent-volumes], a general solution could be to use NFS.
+There are lots of different types per cloud provider [(see here)](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#types-of-persistent-volumes), a general solution could be to use NFS.
 
 </p>
 </details>
